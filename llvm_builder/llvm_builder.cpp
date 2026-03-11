@@ -10,9 +10,7 @@
 
 using namespace std;
 
-// ============================================================
 // Global state for IR generation (per-function scope)
-// ============================================================
 static LLVMBuilderRef builder;
 static LLVMValueRef ret_ref;           // alloca for return value
 static LLVMBasicBlockRef retBB;        // return basic block
@@ -22,16 +20,11 @@ static LLVMValueRef readFunc;
 static LLVMTypeRef printFuncType;
 static LLVMTypeRef readFuncType;
 
-// ============================================================
 // Forward declarations
-// ============================================================
 static LLVMBasicBlockRef genIRStmt(astNode* node, LLVMBasicBlockRef startBB);
 static LLVMValueRef genIRExpr(astNode* node);
 
-// ============================================================
 // Variable Renaming
-// ============================================================
-
 // Collect all variable names declared in a block (including nested blocks)
 // and rename them to unique names using a counter
 static int renameCounter = 0;
@@ -115,13 +108,6 @@ static void renameStmt(astNode* node, map<string, string>& nameMap) {
             for (size_t i = 0; i < stmts->size(); i++) {
                 renameStmt((*stmts)[i], scopeMap);
             }
-            // Propagate any new mappings back except for declarations in this scope
-            // Actually we need the outer scope to see the state after this block
-            // but new declarations should not leak out. Since we made a copy,
-            // only updates to existing variables propagate.
-            // For renaming purposes, we just need each decl to get a unique name.
-            // The scopeMap changes to existing names (from nested decls shadowing)
-            // should NOT propagate back.
             break;
         }
         default:
@@ -151,9 +137,7 @@ void renameVariables(astNode* root) {
     renameStmt(funcNode->func.body, nameMap);
 }
 
-// ============================================================
 // Helper: collect all declared variable names from the function body
-// ============================================================
 static void collectDeclNames(astNode* node, set<string>& names) {
     if (node == NULL) return;
     if (node->type != ast_stmt) return;
@@ -181,9 +165,7 @@ static void collectDeclNames(astNode* node, set<string>& names) {
     }
 }
 
-// ============================================================
 // Dead basic block removal via BFS from entry
-// ============================================================
 static void removeDeadBlocks(LLVMValueRef function) {
     // Collect all basic blocks
     vector<LLVMBasicBlockRef> allBlocks;
@@ -228,9 +210,7 @@ static void removeDeadBlocks(LLVMValueRef function) {
     }
 }
 
-// ============================================================
 // genIRExpr: Generate LLVM IR for an expression node
-// ============================================================
 static LLVMValueRef genIRExpr(astNode* node) {
     if (node == NULL) return NULL;
 
@@ -293,9 +273,7 @@ static LLVMValueRef genIRExpr(astNode* node) {
     }
 }
 
-// ============================================================
 // genIRStmt: Generate LLVM IR for a statement node
-// ============================================================
 static LLVMBasicBlockRef genIRStmt(astNode* node, LLVMBasicBlockRef startBB) {
     if (node == NULL) return startBB;
     if (node->type != ast_stmt) return startBB;
@@ -399,9 +377,7 @@ static LLVMBasicBlockRef genIRStmt(astNode* node, LLVMBasicBlockRef startBB) {
     }
 }
 
-// ============================================================
 // generateIR: Main entry point for IR generation
-// ============================================================
 LLVMModuleRef generateIR(astNode* root) {
     if (root == NULL || root->type != ast_prog) return NULL;
 
