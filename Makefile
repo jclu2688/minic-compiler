@@ -8,6 +8,7 @@ TARGET = minic
 SRCS = main.cpp \
        llvm_builder/llvm_builder.cpp \
        optimization/optimizer.c \
+       backend/backend.cpp \
        frontend/ast.c \
        frontend/semantic.cpp \
        frontend/lex.yy.c \
@@ -38,7 +39,11 @@ frontend/ast.o: frontend/ast.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(TARGET) *.o llvm_builder/*.o optimization/*.o frontend/*.o
+	rm -f $(TARGET) *.o llvm_builder/*.o optimization/*.o backend/*.o frontend/*.o
+	rm -rf output
+	make -C frontend clean
 	make -C llvm_builder clean
+	make -C backend clean
+	make -C test_cases clean
 
 .PHONY: all clean

@@ -5,13 +5,14 @@
 #include "frontend/semantic.h"
 #include "llvm_builder/llvm_builder.h"
 #include "optimization/optimizer.h"
+#include "backend/backend.h"
 
 extern int yyparse();
 extern FILE *yyin;
 extern astNode *root;
 
 void print_usage(const char* prog) {
-    fprintf(stderr, "Usage: %s <input_file> [-o <output_file>] [-opt]\n", prog);
+    fprintf(stderr, "Usage: %s <input_file> [-o <output_file>] [-opt] [-S <asm_output>]\n", prog);
 }
 
 int main(int argc, char *argv[]) {
@@ -23,12 +24,15 @@ int main(int argc, char *argv[]) {
     const char* input_file = argv[1];
     const char* output_file = "output.ll";
     bool do_optimize = false;
+    const char* asm_output = NULL;
 
     for (int i = 2; i < argc; i++) {
         if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
             output_file = argv[++i];
         } else if (strcmp(argv[i], "-opt") == 0) {
             do_optimize = true;
+        } else if (strcmp(argv[i], "-S") == 0 && i + 1 < argc) {
+            asm_output = argv[++i];
         } else {
             fprintf(stderr, "Unknown option: %s\n", argv[i]);
             print_usage(argv[0]);
@@ -75,9 +79,15 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Step 5: Output
+    // Step 5: Output LLVM IR
     LLVMPrintModuleToFile(mod, output_file, NULL);
     printf("Successfully generated LLVM IR: %s\n", output_file);
+
+    // Step 6: Assembly Code Generation (if requested)
+    if (asm_output) {
+        generateAssembly(mod, asm_output);
+        printf("Successfully generated assembly: %s\n", asm_output);
+    }
 
     // Cleanup
     LLVMDisposeModule(mod);
